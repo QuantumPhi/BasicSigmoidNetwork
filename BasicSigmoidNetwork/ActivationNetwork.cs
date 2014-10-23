@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MathNet.Numerics.LinearAlgebra.Single;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -9,34 +10,37 @@ namespace BasicSigmoidNetwork
 {
     class ActivationNetwork
     {
-        public readonly double Alpha { get; private set; }
-        public readonly int Inputs { get; private set; }
-        public readonly int Hidden { get; private set; }
-
+        public readonly double alpha;
+        public readonly int inputs;
+        public readonly int hidden;
+        //remove {get;private set;}
         public double[] WeightsInput { get; private set; }
         public double[] WeightsHidden { get; private set; }
 
-        public readonly IActivationFunction activate { get; private set; }
+        private readonly IActivationFunction activate;
 
         public ActivationNetwork(IActivationFunction function, double alpha, int input, int hidden)
         {
             this.activate = function;
-            Alpha = alpha;
-            WeightsInput = new double[(Inputs = input)];
-            WeightsHidden = new double[(Hidden = hidden)];
+            alpha = alpha;
+            WeightsInput = new double[(inputs = input)];
+            WeightsHidden = new double[(hidden = hidden)];
         }
 
         public double Compute(double[] input)
         {
-            Trace.Assert(input.Length == Inputs);
+            Trace.Assert(input.Length == inputs);
 
+            //individual activation
             double sum = activate.Function(Enumerable
-                .Range(0, Inputs)
+                .Range(0, inputs)
                 .Select(x => WeightsInput[x] * input[x])
                 .Sum());
 
+            //individual activation
+            // still normal function
             double sumHidden = activate.Derivative(Enumerable
-                .Range(0, Hidden)
+                .Range(0, hidden)
                 .Select(x => WeightsHidden[x] * sum)
                 .Sum());
 
@@ -46,31 +50,30 @@ namespace BasicSigmoidNetwork
         public double Train(double[] input, double output)
         {
             double error = 0.5 * Enumerable
-                .Range(0, Inputs)
+                .Range(0, inputs)
                 .Select(x => Math.Pow(output - Compute(input), 2))
                 .Sum();
 
             WeightsHidden = Enumerable
-                .Range(0, Hidden)
-                .Select(x => Alpha * (output - Compute(input)) * activate.Derivative(error) * input[x])
+                .Range(0, hidden)
+                .Select(x => alpha * activate.Derivative(error * input[x]))
                 .ToArray();
 
+            double errorHidden = Enumerable
+                .Range(0, hidden)
+                .Select(y => WeightsHidden[y] + activate.Derivative(WeightsHidden[y] * error * alpha))
+                .Sum();
+
             WeightsInput = Enumerable
-                .Range(0, Inputs)
+                .Range(0, inputs)
                 .Select(x =>
                 {
-                    double errorHidden = Enumerable
-                        .Range(0, Hidden)
-                        .Select(y => (output - Compute(input)) * activate.Derivative(error) * WeightsHidden[y])
-                        .Sum();
-
                     double errorInput = errorHidden * activate.Function(errorHidden) * WeightsInput[x];
-
                     return errorInput;
                 })
                 .ToArray();
 
-            return (1 - error) / 100;
+            return error;
         }
     }
 }

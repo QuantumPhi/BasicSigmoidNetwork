@@ -8,9 +8,9 @@ namespace BasicSigmoidNetwork
 {
     interface IActivationFunction
     {
-        public double Function(double x);
+        double Function(double x);
 
-        public double Derivative(double x);
+        double Derivative(double x);
     }
 
     public class Sigmoid : IActivationFunction
