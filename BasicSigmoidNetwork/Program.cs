@@ -10,6 +10,7 @@ namespace BasicSigmoidNetwork
     {
         static void Main(string[] args)
         {
+            var function = new ActivationNetwork(new Sigmoid(), 0.05, 5, 5);
         }
     }
 }
