@@ -22,9 +22,9 @@ namespace BasicSigmoidNetwork
         public ActivationNetwork(IActivationFunction function, double alpha, int input, int hidden)
         {
             this.activate = function;
-            alpha = alpha;
-            WeightsInput = new double[(inputs = input)];
-            WeightsHidden = new double[(hidden = hidden)];
+            this.alpha = alpha;
+            WeightsInput = new double[(this.inputs = input)];
+            WeightsHidden = new double[(this.hidden = hidden)];
         }
 
         public double Compute(double[] input)
@@ -32,17 +32,17 @@ namespace BasicSigmoidNetwork
             Trace.Assert(input.Length == inputs);
 
             //individual activation
-            double sum = activate.Function(Enumerable
+            double sum = Enumerable
                 .Range(0, inputs)
-                .Select(x => WeightsInput[x] * input[x])
-                .Sum());
+                .Select(x => activate.Function(WeightsInput[x] * input[x]))
+                .Sum();
 
             //individual activation
             // still normal function
-            double sumHidden = activate.Derivative(Enumerable
+            double sumHidden = Enumerable
                 .Range(0, hidden)
-                .Select(x => WeightsHidden[x] * sum)
-                .Sum());
+                .Select(x => activate.Function(WeightsHidden[x] * sum))
+                .Sum();
 
             return sumHidden > 0 ? 1 : 0;
         }
@@ -66,11 +66,7 @@ namespace BasicSigmoidNetwork
 
             WeightsInput = Enumerable
                 .Range(0, inputs)
-                .Select(x =>
-                {
-                    double errorInput = errorHidden * activate.Function(errorHidden) * WeightsInput[x];
-                    return errorInput;
-                })
+                .Select(x => errorHidden * activate.Function(errorHidden) * WeightsInput[x])
                 .ToArray();
 
             return error;
